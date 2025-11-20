@@ -61,13 +61,11 @@ class KeywordExtractor:
             )
             span_id += 1
 
-        # 1) Add all named entities as primary candidate spans
         for ent in doc.ents:
             add_span(ent.start_char, ent.end_char, ent.text)
             if span_id >= self.cfg.max_spans:
                 break
 
-        # 2) For sentences without any entity span, fall back to a noun-phrase anchor
         if span_id < self.cfg.max_spans:
             for sent in doc.sents:
                 if span_id >= self.cfg.max_spans:
@@ -75,7 +73,6 @@ class KeywordExtractor:
 
                 sent_start, sent_end = sent.start_char, sent.end_char
 
-                # Check if this sentence already contributed at least one span
                 has_span_in_sentence = any(
                     (s_start >= sent_start and s_end <= sent_end)
                     for (s_start, s_end) in seen_ranges
@@ -83,18 +80,15 @@ class KeywordExtractor:
                 if has_span_in_sentence:
                     continue
 
-                # Try to pick a subject token as the anchor
                 anchor = None
                 for tok in sent:
                     if tok.dep_ in ("nsubj", "nsubjpass"):
                         anchor = tok
                         break
 
-                # Fallback to the sentence root if it is a NOUN/PROPN
                 if anchor is None and sent.root.pos_ in ("NOUN", "PROPN"):
                     anchor = sent.root
 
-                # Fallback to the first NOUN/PROPN in the sentence
                 if anchor is None:
                     for tok in sent:
                         if tok.pos_ in ("NOUN", "PROPN"):
@@ -105,13 +99,11 @@ class KeywordExtractor:
                     span = anchor.subtree
                     add_span(span.start_char, span.end_char, span.text)
                 else:
-                    # Ultimate fallback: use the whole sentence
                     add_span(sent_start, sent_end, sent.text)
 
         return spans
 
     def parse(self, text: str):
-        """Small helper to expose the underlying spaCy Doc parser."""
         return self.nlp(text)
 
     def extract_claim_frames(self, text: str) -> List[ClaimFrame]:

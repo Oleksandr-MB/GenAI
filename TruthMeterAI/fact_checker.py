@@ -246,23 +246,16 @@ class FactChecker:
         sentences: Optional[List[str]] = None,
         contexts: Optional[List[str]] = None,
     ) -> List[ClaimAssessment]:
-        """
-        Run the LLM factuality judge on each span.
 
-        - `sentences` (optional): precomputed canonical sentence per span, same order as `spans`.
-        - `contexts` (optional): small local context (e.g. prev+current+next sentence) per span.
-        """
         results: List[ClaimAssessment] = []
         max_snips = getattr(self.cfg, "max_snippets_per_span", 3)
 
         for idx, (span, ev_list) in enumerate(zip(spans, evidence)):
-            # Sentence: either precomputed canonical sentence, or extracted ad-hoc
             if sentences is not None and 0 <= idx < len(sentences):
                 sentence = sentences[idx]
             else:
                 sentence = self._extract_sentence(text, span.char_start, span.char_end)
 
-            # Local context: prev+current+next sentences (may be empty)
             if contexts is not None and 0 <= idx < len(contexts):
                 context = contexts[idx]
             else:
@@ -283,7 +276,6 @@ class FactChecker:
                 raw
             )
 
-            # If parsing fails badly, fall back to a default
             if label is None:
                 label = "uncertain"
                 confidence = confidence if confidence is not None else 0.3
@@ -297,7 +289,6 @@ class FactChecker:
                 if 1 <= idx_ev <= len(ev_list):
                     ev_used.append(ev_list[idx_ev - 1])
 
-            # If the model referenced no evidence but we had some, attach the top snippets
             if not ev_used and ev_list:
                 ev_used = ev_list[:max_snips]
 
@@ -320,7 +311,6 @@ class FactChecker:
 
         return results
 
-    # Backward-compatible alias expected by existing pipeline code
     def _parse_llm_output(
         self, raw: str
     ) -> tuple[Optional[str], List[int], Optional[float], Optional[str], Optional[str]]:

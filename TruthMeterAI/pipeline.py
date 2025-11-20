@@ -94,19 +94,15 @@ class Pipeline:
         return [sentence_for_span(span) for span in spans]
 
     def run(self, text: str) -> FactCheckResult:
-        # 1) Entity-level keyword spans (named entities / key noun phrases)
         spans = self.keyword_model.select_spans(text)
 
-        # 2) Sentence text for each span (keeps local anchor) + full-text context
         sentences_for_span = self._sentences_for_spans(text, spans)
         contexts_for_span: List[str] = [text] * len(spans)
 
-        # 3) Evidence retrieval per sentence-level entity set (cache duplicate queries)
         evidence_cache: dict[str, List[EvidenceChunk]] = {}
         evidence_per_span: List[List[EvidenceChunk]] = []
 
         for span, sent_text in zip(spans, sentences_for_span):
-            # Parse the local sentence and collect all named entities in it.
             doc_sent = self.keyword_model.parse(sent_text)
             entity_texts: list[str] = []
 
@@ -115,7 +111,6 @@ class Pipeline:
                 if ent_text:
                     entity_texts.append(ent_text)
 
-            # Fallback: if no entities were found, use the span text itself.
             if not entity_texts:
                 base = span.text.strip()
                 if base:
@@ -126,7 +121,6 @@ class Pipeline:
             for ent_text in entity_texts:
                 key = ent_text.lower()
                 if key not in evidence_cache:
-                    # Wikipedia search only depends on the text, not on offsets.
                     pseudo_span = Span(
                         span_id=-1,
                         text=ent_text,
@@ -139,7 +133,6 @@ class Pipeline:
 
             evidence_per_span.append(combined_chunks)
 
-        # 4) Run the factuality checker on each span
         assessments = self.fact_checker.assess(
             text=text,
             spans=spans,
@@ -148,7 +141,6 @@ class Pipeline:
             contexts=contexts_for_span,
         )
 
-        # 5) Summarize an overall label and explanation
         overall_label, overall_explanation = self._summarize_overall(assessments)
         llm_overall_explanation = self._combine_claim_explanations(assessments)
 
