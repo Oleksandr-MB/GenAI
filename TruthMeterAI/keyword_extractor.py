@@ -13,36 +13,105 @@ class KeywordExtractor:
         self.cfg = cfg
         self.nlp = spacy.load(cfg.spacy_model_name)
 
+class KeywordExtractor:
+
+    def __init__(self, cfg: KeywordModelConfig):
+        self.cfg = cfg
+        self.nlp = spacy.load(cfg.spacy_model_name)
+
     def select_spans(self, text: str) -> List[Span]:
-        """
-        Return up to max_spans sentence-level spans.
+        """Select entity-level spans (named entities / key noun phrases) instead of
+        whole sentences.
+
+        Strategy:
+        1. Take all named entities from the document as primary spans.
+        2. For sentences that contain no named entities, fall back to a salient
+           noun phrase (subject or main noun), or the whole sentence if nothing
+           better is found.
+        3. De-duplicate spans by character offsets and cap the total number to
+           ``cfg.max_spans``.
         """
         doc = self.nlp(text)
 
         spans: List[Span] = []
+        seen_ranges: set[tuple[int, int]] = set()
         span_id = 0
 
-        for sent in doc.sents:
-            sent_text = sent.text.strip()
-            if not sent_text:
-                continue
+        def add_span(start_char: int, end_char: int, span_text: str) -> None:
+            nonlocal span_id
 
+            span_text = span_text.strip()
+            if not span_text:
+                return
+            if span_id >= self.cfg.max_spans:
+                return
+
+            key = (start_char, end_char)
+            if key in seen_ranges:
+                return
+
+            seen_ranges.add(key)
             spans.append(
                 Span(
                     span_id=span_id,
-                    text=sent_text,
-                    char_start=sent.start_char,
-                    char_end=sent.end_char,
+                    text=span_text,
+                    char_start=start_char,
+                    char_end=end_char,
                 )
             )
             span_id += 1
 
+        # 1) Add all named entities as primary candidate spans
+        for ent in doc.ents:
+            add_span(ent.start_char, ent.end_char, ent.text)
             if span_id >= self.cfg.max_spans:
                 break
+
+        # 2) For sentences without any entity span, fall back to a noun-phrase anchor
+        if span_id < self.cfg.max_spans:
+            for sent in doc.sents:
+                if span_id >= self.cfg.max_spans:
+                    break
+
+                sent_start, sent_end = sent.start_char, sent.end_char
+
+                # Check if this sentence already contributed at least one span
+                has_span_in_sentence = any(
+                    (s_start >= sent_start and s_end <= sent_end)
+                    for (s_start, s_end) in seen_ranges
+                )
+                if has_span_in_sentence:
+                    continue
+
+                # Try to pick a subject token as the anchor
+                anchor = None
+                for tok in sent:
+                    if tok.dep_ in ("nsubj", "nsubjpass"):
+                        anchor = tok
+                        break
+
+                # Fallback to the sentence root if it is a NOUN/PROPN
+                if anchor is None and sent.root.pos_ in ("NOUN", "PROPN"):
+                    anchor = sent.root
+
+                # Fallback to the first NOUN/PROPN in the sentence
+                if anchor is None:
+                    for tok in sent:
+                        if tok.pos_ in ("NOUN", "PROPN"):
+                            anchor = tok
+                            break
+
+                if anchor is not None:
+                    span = anchor.subtree
+                    add_span(span.start_char, span.end_char, span.text)
+                else:
+                    # Ultimate fallback: use the whole sentence
+                    add_span(sent_start, sent_end, sent.text)
 
         return spans
 
     def parse(self, text: str):
+        """Small helper to expose the underlying spaCy Doc parser."""
         return self.nlp(text)
 
     def extract_claim_frames(self, text: str) -> List[ClaimFrame]:

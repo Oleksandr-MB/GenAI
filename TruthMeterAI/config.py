@@ -14,7 +14,7 @@ class WikiFetcherConfig:
 
 @dataclass
 class FactCheckerConfig:
-    max_snippets_per_span: int = 3
+    max_snippets_per_span: int = 2
     max_chars_per_snippet: int = 400
 
 

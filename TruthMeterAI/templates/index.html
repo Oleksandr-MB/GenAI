@@ -123,7 +123,7 @@
                                                         <a href="{{ ev.source_url }}" target="_blank" rel="noopener noreferrer">
                                                             View source
                                                         </a>
-                                                        &nbsp;·&nbsp;
+                                                        &nbsp;|&nbsp;
                                                     {% endif %}
                                                     {{ ev.snippet }}
                                                 </small>
@@ -144,12 +144,12 @@
                         <ul class="articles-list">
                             {% for art in articles %}
                                 <li>
-                                    {% if art.url %}
-                                        <a href="{{ art.url }}" target="_blank" rel="noopener noreferrer">
-                                            {{ art.title }}
+                                    {% if art.source_url %}
+                                        <a href="{{ art.source_url }}" target="_blank" rel="noopener noreferrer">
+                                            {{ art.source_title }}
                                         </a>
                                     {% else %}
-                                        {{ art.title }}
+                                        {{ art.source_title }}
                                     {% endif %}
                                 </li>
                             {% endfor %}
