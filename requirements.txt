@@ -1,0 +1,6 @@
+spacy==3.7.5
+torch==2.5.1+cu121
+wikipedia==1.4.0
+accelerate==1.11.0
+transformers==4.46.1
+Flask==3.1.2

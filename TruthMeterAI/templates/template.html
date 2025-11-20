@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>TruthMeterAI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+
+    {% block extra_head %}
+
+    {% endblock %}
+
+</head>
+<body>
+    <div id="loading-overlay">
+        <div class="panel">
+            <span class="spinner"></span>
+            <span>Please Stand By...</span>
+        </div>
+    </div>
+
+    <div class="page">
+        <header>
+            <div>
+                <h1>TruthMeterAI: A Wikipedia-backed AI Powered Fact Checker</h1>
+                <p>Type a paragraph and get claim-level fact checks with evidence from Wikipedia.</p>
+            </div>
+        </header>
+
+    {% block content %}
+    
+    {% endblock %}
+</div>
+
+{% block extra_scripts %}
+<script>
+    (function() {
+        const spans = document.querySelectorAll('.claim-span');
+        const rows = document.querySelectorAll('[data-claim-row-id]');
+
+        function clearActive() {
+            spans.forEach(s => s.classList.remove('active'));
+            rows.forEach(r => r.classList.remove('active-row'));
+        }
+
+        rows.forEach(row => {
+            const id = row.getAttribute('data-claim-row-id');
+            row.addEventListener('click', () => {
+                const target = document.querySelector('.claim-span[data-claim-id="' + id + '"]');
+                if (!target) return;
+                clearActive();
+                row.classList.add('active-row');
+                target.classList.add('active');
+                target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            });
+        });
+
+        spans.forEach(span => {
+            const id = span.getAttribute('data-claim-id');
+            span.addEventListener('click', () => {
+                const row = document.querySelector('[data-claim-row-id="' + id + '"]');
+                if (!row) return;
+                clearActive();
+                span.classList.add('active');
+                row.classList.add('active-row');
+                row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            });
+        });
+    })();
+</script>
+{% endblock %}
+
+</body>
+</html>
