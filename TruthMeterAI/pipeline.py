@@ -75,36 +75,17 @@ class Pipeline:
 
         return tokenizer.decode(gen_ids, skip_special_tokens=True)
 
-    def _sentences_for_spans(self, text: str, spans: List[Span]) -> List[str]:
-        """
-        Map each span back to the sentence that contains it, preserving ordering.
-        """
-        doc = self.keyword_model.parse(text)
-        sentences = list(doc.sents)
-        sent_bounds = [(sent.start_char, sent.end_char, sent.text.strip()) for sent in sentences]
-        default_text = text.strip()
 
-        def sentence_for_span(span: Span) -> str:
-            midpoint = (span.char_start + span.char_end) // 2
-            for start, end, sent_text in sent_bounds:
-                if start <= midpoint < end:
-                    return sent_text
-            return default_text
-
-        return [sentence_for_span(span) for span in spans]
 
     def run(self, text: str) -> FactCheckResult:
         spans = self.keyword_model.select_spans(text)
 
-        sentences_for_span = self._sentences_for_spans(text, spans)
-        contexts_for_span: List[str] = [text] * len(spans)
-
         evidence_cache: dict[str, List[EvidenceChunk]] = {}
         evidence_per_span: List[List[EvidenceChunk]] = []
 
-        for span, sent_text in zip(spans, sentences_for_span):
-            doc_sent = self.keyword_model.parse(sent_text)
-            entity_texts: list[str] = []
+        for span in spans:
+            doc_sent = self.keyword_model.parse(span.text)
+            entity_texts: List[str] = []
 
             for ent in doc_sent.ents:
                 ent_text = ent.text.strip()
@@ -116,7 +97,7 @@ class Pipeline:
                 if base:
                     entity_texts.append(base)
 
-            combined_chunks: list[EvidenceChunk] = []
+            combined_chunks: List[EvidenceChunk] = []
 
             for ent_text in entity_texts:
                 key = ent_text.lower()
@@ -137,8 +118,6 @@ class Pipeline:
             text=text,
             spans=spans,
             evidence=evidence_per_span,
-            sentences=sentences_for_span,
-            contexts=contexts_for_span,
         )
 
         overall_label, overall_explanation = self._summarize_overall(assessments)
@@ -171,8 +150,7 @@ class Pipeline:
             return len(c.span_text or "")
 
         contradicted_all = [
-            c
-            for c in claims
+            c for c in claims
             if c.label == "contradicted"
             and c.confidence >= 0.5
         ]

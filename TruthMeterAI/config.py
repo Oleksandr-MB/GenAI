@@ -8,13 +8,15 @@ class KeywordModelConfig:
 @dataclass
 class WikiFetcherConfig:
     language: str = "en"
-    top_k: int = 5
-    max_snippet_chars: int = 600
+    max_search_results: int = 3
+    max_pages_to_fetch: int = 2
+    min_title_score: float = 0.5
+    max_snippet_length: int = 600
 
 
 @dataclass
 class FactCheckerConfig:
-    max_snippets_per_span: int = 2
+    max_snippets_per_span: int = 3
     max_chars_per_snippet: int = 400
 
 

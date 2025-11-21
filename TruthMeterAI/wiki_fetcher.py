@@ -30,91 +30,47 @@ class WikiFetcher(AbstractWikiFetcher):
         return [w for w in s.split() if w]
 
     def _score_title(self, query_words: List[str], title: str) -> float:
-        t_words = self._normalize_words(title)
-        if not query_words or not t_words:
+        if not query_words:
             return 0.0
+        title_words = self._normalize_words(title)
+        matches = sum(1 for w in query_words if w in title_words)
+        if title_words == query_words:
+            return 1.0
+        return matches / len(query_words)
 
-        common = len(set(query_words) & set(t_words))
-        coverage = common / len(query_words)
+    def _query(self, query: str) -> List[EvidenceChunk]:
+        query_words = self._normalize_words(query)
+        search_results = wikipedia.search(query, results=self.cfg.max_search_results)
 
-        score = 2.0 * coverage
-        if "(" not in title:
-            score += 0.5
+        scored_pages = []
+        for title in search_results:
+            score = self._score_title(query_words, title)
+            if score >= self.cfg.min_title_score:
+                scored_pages.append((score, title))
 
-        score -= 0.01 * len(title)
-        return score
+        scored_pages.sort(reverse=True)
+        selected_pages = scored_pages[: self.cfg.max_pages_to_fetch]
 
-    @lru_cache(maxsize=1024)
-    def _retrieve_for_query(self, query: str) -> List[EvidenceChunk]:
-        query = query.strip()
-        n = query.count(".") + 1
+        evidence_chunks: List[EvidenceChunk] = []
 
-        if not query:
-            return []
-
-        search_query = query
-        try:
-            suggestion = wikipedia.suggest(query)
-            if suggestion:
-                search_query = suggestion
-        except Exception:
-            search_query = query
-
-        try:
-            raw_titles = wikipedia.search(search_query)
-        except Exception:
-            raw_titles = []
-
-        if not raw_titles and search_query != query:
-            try:
-                raw_titles = wikipedia.search(query)
-                search_query = query
-            except Exception:
-                raw_titles = []
-
-        if not raw_titles:
-            return []
-
-        q_words = self._normalize_words(search_query)
-        scored = sorted(
-            raw_titles,
-            key=lambda title: self._score_title(q_words, title),
-            reverse=True,
-        )
-        titles = scored[: self.cfg.top_k * 2]
-
-        chunks: List[EvidenceChunk] = []
-        for title in titles:
-            if len(chunks) >= self.cfg.top_k:
-                break
-
+        for _, title in selected_pages:
             try:
                 page = wikipedia.page(title, auto_suggest=False)
-            except Exception:
+            except (wikipedia.DisambiguationError, wikipedia.PageError):
                 continue
 
-            content = page.content
-            sentences = re.split(r"(?<=[.!?])\s+", content)
-            if not sentences:
-                continue
+            snippet = page.content[: self.cfg.max_snippet_length].strip()
 
-            head = " ".join(sentences[:n])
-
-            q_lower = search_query.lower()
-            hits = [s for s in sentences if q_lower in s.lower()]
-            snippet = " ".join(hits) if hits else head
-            snippet = snippet[: self.cfg.max_snippet_chars]
-
-            chunks.append(
+            evidence_chunks.append(
                 EvidenceChunk(
-                    doc_id=str(getattr(page, "pageid", page.title)),
+                    doc_id=str(page.pageid),
                     source_title=page.title,
                     source_url=page.url,
                     snippet=snippet,
                 )
             )
 
-        return chunks
+        return evidence_chunks
 
     def retrieve(self, span: Span) -> List[EvidenceChunk]:
-        return self._retrieve_for_query(span.text.strip())
+        return self._query(span.text.strip())
