@@ -1,7 +1,7 @@
 import json
 import sys
-from .config import PipelineConfig
-from .pipeline import Pipeline
+from config import PipelineConfig
+from pipeline import Pipeline
 
 
 def main():

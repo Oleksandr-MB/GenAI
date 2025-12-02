@@ -12,7 +12,7 @@ class WikiFetcherConfig:
     max_pages_to_fetch: int = 2
     min_title_score: float = 0.5
     max_snippet_length: int = 600
-
+    max_snippets_per_span: int = 3
 
 @dataclass
 class FactCheckerConfig:

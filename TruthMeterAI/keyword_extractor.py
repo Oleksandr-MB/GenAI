@@ -3,15 +3,15 @@ from __future__ import annotations
 from typing import List
 import spacy
 
-from .schemas import Span
-from .config import KeywordModelConfig
+from schemas import Span
+from config import KeywordModelConfig
 
 
 class KeywordExtractor:
 
-    def __init__(self, cfg: KeywordModelConfig):
+    def __init__(self, cfg: KeywordModelConfig, nlp):
         self.cfg = cfg
-        self.nlp = spacy.load(cfg.spacy_model_name)
+        self.nlp = nlp
 
     def select_spans(self, text: str) -> List[Span]:
 

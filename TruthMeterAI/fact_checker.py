@@ -1,6 +1,6 @@
 from typing import List, Callable, Optional
-from .schemas import Span, EvidenceChunk, ClaimAssessment
-from .config import FactCheckerConfig
+from schemas import Span, EvidenceChunk, ClaimAssessment
+from config import FactCheckerConfig
 
 
 class FactChecker:
@@ -88,6 +88,8 @@ class FactChecker:
             a corresponding value in the evidence for the same subject and relation. If evidence
             gives a different value, choose CONTRADICTED. If evidence gives no value, choose
             UNCERTAIN or OUT_OF_SCOPE, but never SUPPORTED.
+        - If the evidence doesn't mention the main subject of the claim or doesn't discuss the relation
+            implied by the span, choose OUT_OF_SCOPE. If you have other evidences, prefer those. 
         - If it is impossible to deduce a clear label from the evidence, you might use external knowledge, however, 
         the answer given this way must have a lower confidence, unless the claim is trivial, like "1 + 1 = 2".
         - If the subject in SENTENCE is a pronoun like "it", "he", "she", "they", assume it refers to the main entity described by the EVIDENCE_SNIPPETS, as long as that interpretation is reasonable.

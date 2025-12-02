@@ -1,13 +1,14 @@
 from typing import List, Type
 
 import torch
+import spacy
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from .config import PipelineConfig
-from .fact_checker import FactChecker
-from .keyword_extractor import KeywordExtractor
-from .schemas import ClaimAssessment, EvidenceChunk, FactCheckResult, Span
-from .wiki_fetcher import AbstractWikiFetcher, WikiFetcher
+from config import PipelineConfig
+from fact_checker import FactChecker
+from keyword_extractor import KeywordExtractor
+from schemas import ClaimAssessment, EvidenceChunk, FactCheckResult, Span
+from wiki_fetcher import AbstractWikiFetcher, WikiFetcher
 
 
 class Pipeline:
@@ -18,8 +19,9 @@ class Pipeline:
     ):
         self.cfg = cfg
         self._llm_model_name = cfg.llm_model_name
-        self.keyword_model = KeywordExtractor(cfg.keyword)
-        self.wiki_fetcher = wiki_fetcher_cls(cfg.wiki)
+        nlp = spacy.load(cfg.keyword.spacy_model_name)
+        self.keyword_model = KeywordExtractor(cfg.keyword, nlp)
+        self.wiki_fetcher = wiki_fetcher_cls(cfg.wiki, nlp)
         self._llm_tokenizer = AutoTokenizer.from_pretrained(self._llm_model_name)
         self._llm_model = AutoModelForCausalLM.from_pretrained(
             self._llm_model_name,
@@ -108,7 +110,7 @@ class Pipeline:
                         char_start=0,
                         char_end=0,
                     )
-                    evidence_cache[key] = self.wiki_fetcher.retrieve(pseudo_span)
+                    evidence_cache[key] = self.wiki_fetcher.retrieve(pseudo_span, text)
 
                 combined_chunks.extend(evidence_cache.get(key, []))
 
