@@ -4,11 +4,11 @@ import torch
 import spacy
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from config import PipelineConfig
-from fact_checker import FactChecker
-from keyword_extractor import KeywordExtractor
-from schemas import ClaimAssessment, EvidenceChunk, FactCheckResult, Span
-from wiki_fetcher import AbstractWikiFetcher, WikiFetcher
+from .config import PipelineConfig
+from .fact_checker import FactChecker
+from .keyword_extractor import KeywordExtractor
+from .schemas import ClaimAssessment, EvidenceChunk, FactCheckResult, Span
+from .wiki_fetcher import AbstractWikiFetcher, WikiFetcher
 
 
 class Pipeline:

@@ -7,8 +7,8 @@ import re
 
 import wikipedia
 
-from schemas import EvidenceChunk, Span
-from config import WikiFetcherConfig
+from .schemas import EvidenceChunk, Span
+from .config import WikiFetcherConfig
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
