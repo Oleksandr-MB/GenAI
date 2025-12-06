@@ -1,6 +1,6 @@
 from typing import List, Callable, Optional
-from .schemas import Span, EvidenceChunk, ClaimAssessment
-from .config import FactCheckerConfig
+from schemas import Span, EvidenceChunk, ClaimAssessment
+from config import FactCheckerConfig
 
 
 class FactChecker:

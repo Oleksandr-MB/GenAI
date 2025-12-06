@@ -6,9 +6,11 @@ from typing import List
 import re
 
 import wikipedia
+from wikipedia2vec import Wikipedia2Vec
+from wikipedia2vec.dictionary import Entity
 
-from .schemas import EvidenceChunk, Span
-from .config import WikiFetcherConfig
+from schemas import EvidenceChunk, Span
+from config import WikiFetcherConfig
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
@@ -29,6 +31,30 @@ class WikiFetcher(AbstractWikiFetcher):
         self.nlp = nlp
         self.page_tfidf_cache = {}
         wikipedia.set_lang(cfg.language)
+        self.emb_model = Wikipedia2Vec.load(cfg.wikipedia2vec_path)
+
+    def search(self, query: str) -> List[str]:
+        
+        entity = self.emb_model.dictionary.get_entity(query)
+        if entity is not None:
+            sims = self.emb_model.most_similar(entity, count=50) #margin to catch enough entities
+            titles = [obj.title for obj, score in sims if isinstance(obj, Entity)]
+            return titles[: self.cfg.max_pages_to_fetch]
+        else:
+            query_words = self._normalize_words(query)
+            search_results = wikipedia.search(query, results=self.cfg.max_search_results)
+
+            scored_pages = []
+            for title in search_results:
+                score = self._score_title(query_words, title)
+                if score >= self.cfg.min_title_score:
+                    scored_pages.append((score, title))
+
+            #sort scored pages by score descending, if scores are equal, prioritize titles with fewer length
+            scored_pages.sort(key=lambda x: (-x[0], len(x[1])))
+            titles = [title for score, title in scored_pages]
+            return titles[: self.cfg.max_pages_to_fetch]
+
 
     def _normalize_words(self, s: str) -> List[str]:
         s = re.sub(r"[^a-z0-9 ]+", " ", s.lower())
@@ -44,22 +70,11 @@ class WikiFetcher(AbstractWikiFetcher):
         return matches / len(query_words)
 
     def _query(self, query: str, full_query : str) -> List[EvidenceChunk]:
-        query_words = self._normalize_words(query)
-        search_results = wikipedia.search(query, results=self.cfg.max_search_results)
-
-        scored_pages = []
-        for title in search_results:
-            score = self._score_title(query_words, title)
-            if score >= self.cfg.min_title_score:
-                scored_pages.append((score, title))
-
-        #sort scored pages by score descending, if scores are equal, prioritize titles with fewer length
-        scored_pages.sort(key=lambda x: (-x[0], len(x[1])))
-        selected_pages = scored_pages[: self.cfg.max_pages_to_fetch]
+        selected_pages = self.search(query)
 
         evidence_chunks: List[EvidenceChunk] = []
 
-        for _, title in selected_pages:
+        for title in selected_pages:
             try:
                 page = wikipedia.page(title, auto_suggest=False)
             except (wikipedia.DisambiguationError, wikipedia.PageError):

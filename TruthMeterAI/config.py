@@ -8,11 +8,12 @@ class KeywordModelConfig:
 @dataclass
 class WikiFetcherConfig:
     language: str = "en"
-    max_search_results: int = 3
+    max_search_results: int = 5
     max_pages_to_fetch: int = 2
     min_title_score: float = 0.5
     max_snippet_length: int = 600
     max_snippets_per_span: int = 3
+    wikipedia2vec_path: str = "TruthMeterAI/models/enwiki_20180420_100d.pkl"
 
 @dataclass
 class FactCheckerConfig:

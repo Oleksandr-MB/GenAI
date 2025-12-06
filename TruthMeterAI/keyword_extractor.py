@@ -3,8 +3,8 @@ from __future__ import annotations
 from typing import List
 import spacy
 
-from .schemas import Span
-from .config import KeywordModelConfig
+from schemas import Span
+from config import KeywordModelConfig
 
 
 class KeywordExtractor:
