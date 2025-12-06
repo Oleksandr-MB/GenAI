@@ -163,7 +163,7 @@ class FactChecker:
             lowered = {str(k).lower(): v for k, v in obj.items()}
             raw_label = str(lowered.get("label", "")).strip().upper()
             if raw_label in label_map:
-                label: str = label_map[raw_label]
+                label: str | None = label_map[raw_label]
                 indices: List[int] = []
                 ev_val = lowered.get("evidence", [])
                 if isinstance(ev_val, list):

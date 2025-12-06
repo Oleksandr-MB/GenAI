@@ -15,14 +15,14 @@ else:
     from .fact_checker import FactChecker
     from .keyword_extractor import KeywordExtractor
     from .schemas import ClaimAssessment, EvidenceChunk, FactCheckResult, Span
-    from .wiki_fetcher import AbstractWikiFetcher, WikiFetcher
+    from .wiki_fetcher import WikiFetcher
 
 
 class Pipeline:
     def __init__(
         self,
         cfg: PipelineConfig,
-        wiki_fetcher_cls: Type[AbstractWikiFetcher] = WikiFetcher,
+        wiki_fetcher_cls: Type[WikiFetcher] = WikiFetcher,
     ):
         self.cfg = cfg
         self._llm_model_name = cfg.llm_model_name

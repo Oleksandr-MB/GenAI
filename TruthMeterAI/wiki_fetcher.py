@@ -132,7 +132,7 @@ class WikiFetcher(AbstractWikiFetcher):
     def _count_title_level(self, title_raw : str) -> int:
         return title_raw.count('=') // 2
     
-    def _adjust_title_stacks(self, title_stack: list[str], title: str) -> None:
+    def _adjust_title_stacks(self, title_stack: list[str], title: str) -> list[str]:
         title_level = self._count_title_level(title)
         index = len(title_stack) - 1
         while index >= 0 and self._count_title_level(title_stack[index]) >= title_level:
