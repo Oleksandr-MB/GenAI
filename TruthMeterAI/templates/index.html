@@ -139,23 +139,30 @@
                 </table>
 
                 {% if articles %}
+                    {% set ns = namespace(seen=[]) %}
                     <div style="margin-top:1rem;">
                         <strong>Wikipedia articles consulted:</strong>
                         <ul class="articles-list">
-                            {% for art in articles %}
-                                <li>
-                                    {% if art.source_url %}
-                                        <a href="{{ art.source_url }}" target="_blank" rel="noopener noreferrer">
-                                            {{ art.source_title }}
-                                        </a>
-                                    {% else %}
-                                        {{ art.source_title }}
-                                    {% endif %}
-                                </li>
-                            {% endfor %}
+                        {% for art in articles %}
+                            {# choose what "unique" means: URL first, then title #}
+                            {% set key = art.source_url or art.source_title %}
+
+                            {% if key not in ns.seen %}
+                            {% set _ = ns.seen.append(key) %}
+                            <li>
+                                {% if art.source_url %}
+                                <a href="{{ art.source_url }}" target="_blank" rel="noopener noreferrer">
+                                    {{ art.source_title }}
+                                </a>
+                                {% else %}
+                                {{ art.source_title }}
+                                {% endif %}
+                            </li>
+                            {% endif %}
+                        {% endfor %}
                         </ul>
                     </div>
-                {% endif %}
+                    {% endif %}
             {% else %}
                 <p class="empty-state">
                     No claims detected for this text.

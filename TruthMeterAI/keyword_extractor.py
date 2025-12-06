@@ -3,8 +3,12 @@ from __future__ import annotations
 from typing import List
 import spacy
 
-from schemas import Span
-from config import KeywordModelConfig
+if __package__ in (None, ""):
+    from schemas import Span
+    from config import KeywordModelConfig
+else:
+    from .schemas import Span
+    from .config import KeywordModelConfig
 
 
 class KeywordExtractor:
@@ -80,7 +84,6 @@ class KeywordExtractor:
                             break
 
                 if anchor is not None:
-                    # anchor.subtree is a generator; build a concrete span around the subtree tokens
                     token_start = anchor.left_edge.idx
                     token_end = anchor.right_edge.idx + len(anchor.right_edge)
                     span_text = doc.text[token_start:token_end]

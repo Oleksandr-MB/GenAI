@@ -4,11 +4,18 @@ import torch
 import spacy
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from config import PipelineConfig
-from fact_checker import FactChecker
-from keyword_extractor import KeywordExtractor
-from schemas import ClaimAssessment, EvidenceChunk, FactCheckResult, Span
-from wiki_fetcher import AbstractWikiFetcher, WikiFetcher
+if __package__ in (None, ""):
+    from config import PipelineConfig
+    from fact_checker import FactChecker
+    from keyword_extractor import KeywordExtractor
+    from schemas import ClaimAssessment, EvidenceChunk, FactCheckResult, Span
+    from wiki_fetcher import AbstractWikiFetcher, WikiFetcher
+else:
+    from .config import PipelineConfig
+    from .fact_checker import FactChecker
+    from .keyword_extractor import KeywordExtractor
+    from .schemas import ClaimAssessment, EvidenceChunk, FactCheckResult, Span
+    from .wiki_fetcher import AbstractWikiFetcher, WikiFetcher
 
 
 class Pipeline:
@@ -28,6 +35,11 @@ class Pipeline:
             torch_dtype=torch.float32,
             device_map="auto",
         )
+        gen_cfg = self._llm_model.generation_config
+        gen_cfg.do_sample = False
+        gen_cfg.temperature = 1.0
+        gen_cfg.top_p = 1.0
+        gen_cfg.top_k = 50
         self.fact_checker = FactChecker(cfg.checker, self._llm_call)
 
     def _llm_call(self, prompt: str) -> str:
@@ -70,6 +82,9 @@ class Pipeline:
                 attention_mask=inputs.get("attention_mask"),
                 max_new_tokens=256,
                 do_sample=False,
+                temperature=1.0,
+                top_p=1.0,
+                top_k=50,
                 pad_token_id=tokenizer.eos_token_id,
             )
 

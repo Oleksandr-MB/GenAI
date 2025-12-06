@@ -5,9 +5,14 @@ from typing import List, Tuple
 
 from flask import Flask, render_template, request
 
-from config import PipelineConfig
-from pipeline import Pipeline
-from schemas import FactCheckResult, ClaimAssessment, EvidenceChunk
+if __package__ in (None, ""):
+    from config import PipelineConfig
+    from pipeline import Pipeline
+    from schemas import FactCheckResult, ClaimAssessment, EvidenceChunk
+else:
+    from .config import PipelineConfig
+    from .pipeline import Pipeline
+    from .schemas import FactCheckResult, ClaimAssessment, EvidenceChunk
 
 app = Flask(__name__)
 

@@ -1,8 +1,12 @@
 import json
 import sys
 
-from config import PipelineConfig
-from pipeline import Pipeline
+if __package__ in (None, ""):
+    from config import PipelineConfig
+    from pipeline import Pipeline
+else:
+    from .config import PipelineConfig
+    from .pipeline import Pipeline
 
 
 def main():

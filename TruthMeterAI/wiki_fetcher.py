@@ -9,8 +9,12 @@ import wikipedia
 from wikipedia2vec import Wikipedia2Vec
 from wikipedia2vec.dictionary import Entity
 
-from schemas import EvidenceChunk, Span
-from config import WikiFetcherConfig
+if __package__ in (None, ""):
+    from schemas import EvidenceChunk, Span
+    from config import WikiFetcherConfig
+else:
+    from .schemas import EvidenceChunk, Span
+    from .config import WikiFetcherConfig
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
@@ -37,7 +41,7 @@ class WikiFetcher(AbstractWikiFetcher):
         
         entity = self.emb_model.dictionary.get_entity(query)
         if entity is not None:
-            sims = self.emb_model.most_similar(entity, count=50) #margin to catch enough entities
+            sims = self.emb_model.most_similar(entity, count=50)
             titles = [obj.title for obj, score in sims if isinstance(obj, Entity)]
             return titles[: self.cfg.max_pages_to_fetch]
         else:
@@ -50,7 +54,6 @@ class WikiFetcher(AbstractWikiFetcher):
                 if score >= self.cfg.min_title_score:
                     scored_pages.append((score, title))
 
-            #sort scored pages by score descending, if scores are equal, prioritize titles with fewer length
             scored_pages.sort(key=lambda x: (-x[0], len(x[1])))
             titles = [title for score, title in scored_pages]
             return titles[: self.cfg.max_pages_to_fetch]
