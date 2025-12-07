@@ -20,10 +20,7 @@ class EvidenceChunk:
 
 @dataclass
 class ClaimAssessment:
-    span_id: int
-    span_text: str
-    char_start: int
-    char_end: int
+    sentence: str
 
     label: str 
     confidence: float

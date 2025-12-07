@@ -100,6 +100,7 @@ class Pipeline:
         evidence_cache: dict[str, List[EvidenceChunk]] = {}
         evidence_per_span: List[List[EvidenceChunk]] = []
 
+        all_entity_texts = []
         for span in spans:
             doc_sent = self.keyword_model.parse(span.text)
             entity_texts: List[str] = []
@@ -113,27 +114,27 @@ class Pipeline:
                 base = span.text.strip()
                 if base:
                     entity_texts.append(base)
+            all_entity_texts.extend(entity_texts)
 
-            combined_chunks: List[EvidenceChunk] = []
+        combined_chunks: List[EvidenceChunk] = []
 
-            for ent_text in entity_texts:
-                key = ent_text.lower()
-                if key not in evidence_cache:
-                    pseudo_span = Span(
-                        span_id=-1,
-                        text=ent_text,
-                        char_start=0,
-                        char_end=0,
-                    )
-                    evidence_cache[key] = self.wiki_fetcher.retrieve(pseudo_span, text)
+        for ent_text in all_entity_texts:
+            key = ent_text.lower()
+            if key not in evidence_cache:
+                pseudo_span = Span(
+                    span_id=-1,
+                    text=ent_text,
+                    char_start=0,
+                    char_end=0,
+                )
+                evidence_cache[key] = self.wiki_fetcher.retrieve(pseudo_span, text)
 
-                combined_chunks.extend(evidence_cache.get(key, []))
+            combined_chunks.extend(evidence_cache.get(key, []))
 
-            evidence_per_span.append(combined_chunks)
+        evidence_per_span.append(combined_chunks)
 
         assessments = self.fact_checker.assess(
             text=text,
-            spans=spans,
             evidence=evidence_per_span,
         )
 
@@ -164,7 +165,7 @@ class Pipeline:
             return "unknown", "No factual claims were detected in the text."
 
         def importance(c: ClaimAssessment) -> int:
-            return len(c.span_text or "")
+            return c.confidence
 
         contradicted_all = [
             c for c in claims
@@ -184,8 +185,7 @@ class Pipeline:
             main = contradicted[0]
             explanation = (
                 "The statement is considered false because at least one important claim "
-                "is contradicted by the evidence. For example: "
-                f"\"{main.span_text}\"."
+                "is contradicted by the evidence."
             )
             return "false", explanation
 

@@ -23,7 +23,7 @@ class FactCheckerConfig:
 
 @dataclass
 class PipelineConfig:
-    llm_model_name: str = "Qwen/Qwen2.5-1.5B-Instruct"
+    llm_model_name: str = "Qwen/Qwen3-4B-Instruct-2507"
     keyword: KeywordModelConfig = KeywordModelConfig()
     wiki: WikiFetcherConfig = WikiFetcherConfig()
     checker: FactCheckerConfig = FactCheckerConfig()
