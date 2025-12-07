@@ -173,7 +173,7 @@ class Pipeline:
             c
             for c in claims
             if c.label == "supported"
-            and c.confidence >= 0.6
+            and c.confidence >= 0.8
         ]
 
         if contradicted:

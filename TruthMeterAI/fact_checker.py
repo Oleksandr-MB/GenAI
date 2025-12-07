@@ -56,8 +56,7 @@ class FactChecker:
 
         trimmed_evs: List[str] = []
         for e in ev_list[:max_snips]:
-            snippet = (e.snippet or "").replace("\n", " ").strip()
-            snippet = snippet[:max_chars]
+            snippet = self._trim_snippet(e.snippet or "", sentence, max_chars)
             trimmed_evs.append(snippet)
 
         if trimmed_evs:
@@ -138,6 +137,60 @@ class FactChecker:
             evidence_block=evidence_block,
         )
         return prompt
+
+    def _keyword_candidates(self, sentence: str) -> List[str]:
+        tokens = re.findall(r"[A-Za-z0-9]+", sentence.lower())
+        seen: set[str] = set()
+
+        def add_tokens(items: List[str], dest: List[str]) -> None:
+            for token in items:
+                if token and token not in seen:
+                    seen.add(token)
+                    dest.append(token)
+
+        numeric = [t for t in tokens if any(ch.isdigit() for ch in t)]
+        alpha = [t for t in tokens if t.isalpha() and len(t) >= 4]
+        leftovers = [t for t in tokens if t not in numeric and t not in alpha]
+
+        ordered: List[str] = []
+        add_tokens(numeric, ordered)
+        add_tokens(alpha, ordered)
+        add_tokens(leftovers, ordered)
+
+        return ordered
+
+    def _trim_snippet(self, snippet: str, sentence: str, max_chars: int) -> str:
+        cleaned = snippet.replace("\n", " ").strip()
+        if not max_chars or len(cleaned) <= max_chars:
+            return cleaned
+
+        keywords = self._keyword_candidates(sentence)
+        lowered = cleaned.lower()
+
+        match_idx = None
+        for kw in keywords:
+            idx = lowered.find(kw)
+            if idx != -1:
+                match_idx = idx
+                break
+
+        if match_idx is None:
+            start = 0
+            end = max_chars
+        else:
+            half = max_chars // 2
+            start = max(0, match_idx - half)
+            end = start + max_chars
+            if end > len(cleaned):
+                end = len(cleaned)
+                start = max(0, end - max_chars)
+
+        trimmed = cleaned[start:end].strip()
+
+        prefix = "..." if start > 0 else ""
+        suffix = "..." if end < len(cleaned) else ""
+
+        return f"{prefix}{trimmed}{suffix}".strip()
 
     def _parse_llm_response(
         self,

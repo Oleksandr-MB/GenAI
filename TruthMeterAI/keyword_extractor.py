@@ -61,11 +61,11 @@ class KeywordExtractor:
 
                 sent_start, sent_end = sent.start_char, sent.end_char
 
-                has_span_in_sentence = any(
-                    (s_start >= sent_start and s_end <= sent_end)
+                has_full_sentence = any(
+                    (s_start == sent_start and s_end == sent_end)
                     for (s_start, s_end) in seen_ranges
                 )
-                if has_span_in_sentence:
+                if has_full_sentence:
                     continue
 
                 anchor = None
@@ -88,8 +88,8 @@ class KeywordExtractor:
                     token_end = anchor.right_edge.idx + len(anchor.right_edge)
                     span_text = doc.text[token_start:token_end]
                     add_span(token_start, token_end, span_text)
-                else:
-                    add_span(sent_start, sent_end, sent.text)
+
+                add_span(sent_start, sent_end, sent.text)
 
         return spans
 
