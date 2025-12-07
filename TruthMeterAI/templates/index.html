@@ -56,29 +56,7 @@
                 </p>
             {% endif %}
 
-            <div class="original-text" id="original-text">
-                {% for segment in segments %}
-                    {% if segment.claim %}
-                        {% set label = segment.claim.label.lower() %}
-                        {% set cls = 'uncertain' %}
-                        {% if label == 'supported' %}
-                            {% set cls = 'supported' %}
-                        {% elif label == 'contradicted' %}
-                            {% set cls = 'contradicted' %}
-                        {% elif label in ['uncertain', 'unknown'] %}
-                            {% set cls = 'uncertain' %}
-                        {% elif label in ['out_of_scope', 'out-of-scope'] %}
-                            {% set cls = 'out-of-scope' %}
-                        {% endif %}
-                        <span
-                            class="claim-span {{ cls }}"
-                            data-claim-id="{{ segment.claim.span_id }}"
-                        >{{ segment.text }}</span>
-                    {% else %}
-                        {{ segment.text }}
-                    {% endif %}
-                {% endfor %}
-            </div>
+            <div class="original-text" id="original-text">{{ result_text }}</div>
         </div>
 
         <div class="card">
@@ -89,7 +67,7 @@
                             <th>#</th>
                             <th>Label</th>
                             <th>Confidence</th>
-                            <th>Claim</th>
+                            <th>Claim &amp; Explanation</th>
                             <th>Evidence</th>
                         </tr>
                     </thead>
@@ -106,18 +84,23 @@
                             {% elif label in ['out_of_scope', 'out-of-scope'] %}
                                 {% set cls = 'out-of-scope' %}
                             {% endif %}
-                            <tr data-claim-row-id="{{ c.span_id }}">
+                            <tr>
                                 <td>{{ loop.index }}</td>
                                 <td>
                                     <span class="pill {{ cls }}">{{ c.label }}</span>
                                 </td>
                                 <td>{{ '%.2f'|format(c.confidence) }}</td>
-                                <td>{{ c.span_text }}</td>
+                                <td>
+                                    <div class="claim-main">{{ c.sentence }}</div>
+                                    {% if c.explanation %}
+                                        <div class="claim-explanation">{{ c.explanation }}</div>
+                                    {% endif %}
+                                </td>
                                 <td>
                                     {% if c.evidence_used %}
                                         {% for ev in c.evidence_used %}
                                             <div class="evidence-item">
-                                                <strong>{{ ev.source_title }}</strong><br>
+                                                <strong>{{ ev.source_title or 'Source' }}</strong><br>
                                                 <small>
                                                     {% if ev.source_url %}
                                                         <a href="{{ ev.source_url }}" target="_blank" rel="noopener noreferrer">

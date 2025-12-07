@@ -11,19 +11,21 @@ class WikiFetcherConfig:
     max_search_results: int = 5
     max_pages_to_fetch: int = 2
     min_title_score: float = 0.5
-    max_snippet_length: int = 600
-    max_snippets_per_span: int = 3
     wikipedia2vec_path: str = "TruthMeterAI/models/enwiki_20180420_100d.pkl"
+    # increasing will load your system more
+    max_snippet_length: int = 512
+    max_snippets_per_span: int = 3 
 
 @dataclass
 class FactCheckerConfig:
+    # increasing will load your system more
     max_snippets_per_span: int = 3
-    max_chars_per_snippet: int = 400
+    max_chars_per_snippet: int = 512
 
 
 @dataclass
 class PipelineConfig:
-    llm_model_name: str = "Qwen/Qwen3-4B-Instruct-2507"
+    llm_model_name: str = "Qwen/Qwen3-4B-Instruct-2507" # can be changed to Qwen/Qwen2.5-1.5B-Instruct for weaker hardware
     keyword: KeywordModelConfig = KeywordModelConfig()
     wiki: WikiFetcherConfig = WikiFetcherConfig()
     checker: FactCheckerConfig = FactCheckerConfig()

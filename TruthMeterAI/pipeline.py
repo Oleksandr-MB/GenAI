@@ -9,7 +9,7 @@ if __package__ in (None, ""):
     from fact_checker import FactChecker
     from keyword_extractor import KeywordExtractor
     from schemas import ClaimAssessment, EvidenceChunk, FactCheckResult, Span
-    from wiki_fetcher import AbstractWikiFetcher, WikiFetcher
+    from wiki_fetcher import WikiFetcher
 else:
     from .config import PipelineConfig
     from .fact_checker import FactChecker
@@ -32,14 +32,9 @@ class Pipeline:
         self._llm_tokenizer = AutoTokenizer.from_pretrained(self._llm_model_name)
         self._llm_model = AutoModelForCausalLM.from_pretrained(
             self._llm_model_name,
-            torch_dtype=torch.float32,
+            dtype=torch.float32,
             device_map="auto",
         )
-        gen_cfg = self._llm_model.generation_config
-        gen_cfg.do_sample = False
-        gen_cfg.temperature = 1.0
-        gen_cfg.top_p = 1.0
-        gen_cfg.top_k = 50
         self.fact_checker = FactChecker(cfg.checker, self._llm_call)
 
     def _llm_call(self, prompt: str) -> str:
@@ -164,7 +159,7 @@ class Pipeline:
         if not claims:
             return "unknown", "No factual claims were detected in the text."
 
-        def importance(c: ClaimAssessment) -> int:
+        def importance(c: ClaimAssessment) -> float:
             return c.confidence
 
         contradicted_all = [

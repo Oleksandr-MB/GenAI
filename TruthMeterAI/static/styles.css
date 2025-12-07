@@ -192,36 +192,7 @@ button:disabled {
     line-height: 1.6;
     max-height: 420px;
     overflow: auto;
-}
-
-.claim-span {
-    padding: 0.05rem 0.15rem;
-    border-radius: 0.35rem;
-    margin: -0.05rem 0;
-    border-left-width: 3px;
-    border-left-style: solid;
-    cursor: pointer;
-}
-
-.claim-span.supported {
-    background: var(--supported-bg);
-    border-left-color: var(--supported-border);
-}
-.claim-span.contradicted {
-    background: var(--contradicted-bg);
-    border-left-color: var(--contradicted-border);
-}
-.claim-span.uncertain {
-    background: var(--uncertain-bg);
-    border-left-color: var(--uncertain-border);
-}
-.claim-span.out-of-scope {
-    background: var(--oos-bg);
-    border-left-color: var(--oos-border);
-}
-
-.claim-span.active {
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.6);
+    white-space: pre-wrap;
 }
 
 .claims-table {
@@ -257,6 +228,16 @@ button:disabled {
 
 .claims-table tbody tr.active-row {
     background: #eef2ff;
+}
+
+.claim-main {
+    font-weight: 500;
+}
+
+.claim-explanation {
+    margin-top: 0.25rem;
+    font-size: 0.85rem;
+    color: var(--muted);
 }
 
 .pill {

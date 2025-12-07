@@ -32,43 +32,7 @@
     {% endblock %}
 </div>
 
-{% block extra_scripts %}
-<script>
-    (function() {
-        const spans = document.querySelectorAll('.claim-span');
-        const rows = document.querySelectorAll('[data-claim-row-id]');
-
-        function clearActive() {
-            spans.forEach(s => s.classList.remove('active'));
-            rows.forEach(r => r.classList.remove('active-row'));
-        }
-
-        rows.forEach(row => {
-            const id = row.getAttribute('data-claim-row-id');
-            row.addEventListener('click', () => {
-                const target = document.querySelector('.claim-span[data-claim-id="' + id + '"]');
-                if (!target) return;
-                clearActive();
-                row.classList.add('active-row');
-                target.classList.add('active');
-                target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            });
-        });
-
-        spans.forEach(span => {
-            const id = span.getAttribute('data-claim-id');
-            span.addEventListener('click', () => {
-                const row = document.querySelector('[data-claim-row-id="' + id + '"]');
-                if (!row) return;
-                clearActive();
-                span.classList.add('active');
-                row.classList.add('active-row');
-                row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            });
-        });
-    })();
-</script>
-{% endblock %}
+{% block extra_scripts %}{% endblock %}
 
 </body>
 </html>

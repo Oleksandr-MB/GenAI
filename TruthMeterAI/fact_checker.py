@@ -1,10 +1,10 @@
 from typing import List, Callable, Optional
 
 if __package__ in (None, ""):
-    from schemas import Span, EvidenceChunk, ClaimAssessment
+    from schemas import EvidenceChunk, ClaimAssessment
     from config import FactCheckerConfig
 else:
-    from .schemas import Span, EvidenceChunk, ClaimAssessment
+    from .schemas import EvidenceChunk, ClaimAssessment
     from .config import FactCheckerConfig
 import re
 
